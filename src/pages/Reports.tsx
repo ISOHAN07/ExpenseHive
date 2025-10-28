@@ -4,8 +4,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -14,6 +12,8 @@ import {
 } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
+
+const COLORS = ['#8054AB', '#00C49F', '#FFBB28', '#FF8042']
 
 const monthlyData = [
   { month: "Jan", expenses: 2400 },
@@ -66,7 +66,7 @@ export default function Reports() {
                   <XAxis dataKey="month" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="expenses" fill="hsl(var(--chart-1))" />
+                  <Bar dataKey="expenses" fill="#1c69e3" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -92,8 +92,8 @@ export default function Reports() {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    {categoryData.map((_entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -111,13 +111,13 @@ export default function Reports() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={weeklyData}>
+                <BarChart data={weeklyData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="week" />
                   <YAxis />
                   <Tooltip />
-                  <Line type="monotone" dataKey="expenses" stroke="hsl(var(--chart-1))" />
-                </LineChart>
+                  <Bar dataKey="expenses" fill="#1c69e3" barSize={25}/>
+                </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>

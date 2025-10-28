@@ -10,11 +10,17 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from "recharts"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
-import { TrendingUp, Wallet, Target, AlertCircle } from "lucide-react"
+} from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
+import { TrendingUp, Wallet, Target, AlertCircle } from "lucide-react";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042']
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
 const monthlyData = [
   { month: "Jan", expenses: 2400, budget: 2400 },
@@ -23,7 +29,7 @@ const monthlyData = [
   { month: "Apr", expenses: 3908, budget: 2000 },
   { month: "May", expenses: 4800, budget: 2181 },
   { month: "Jun", expenses: 3800, budget: 2500 },
-]
+];
 
 const categoryData = [
   { name: "Food", value: 2400, fill: "hsl(var(--chart-1))" },
@@ -31,14 +37,26 @@ const categoryData = [
   { name: "Entertainment", value: 9800, fill: "hsl(var(--chart-3))" },
   { name: "Utilities", value: 3908, fill: "hsl(var(--chart-4))" },
   { name: "Healthcare", value: 5008, fill: "hsl(var(--chart-5))" },
-]
+];
 
 const recentExpenses = [
   { id: 1, category: "Food", amount: 45.5, date: "Today", icon: "🍔" },
   { id: 2, category: "Transport", amount: 12.0, date: "Yesterday", icon: "🚗" },
-  { id: 3, category: "Entertainment", amount: 25.0, date: "2 days ago", icon: "🎬" },
-  { id: 4, category: "Utilities", amount: 89.99, date: "3 days ago", icon: "💡" },
-]
+  {
+    id: 3,
+    category: "Entertainment",
+    amount: 25.0,
+    date: "2 days ago",
+    icon: "🎬",
+  },
+  {
+    id: 4,
+    category: "Utilities",
+    amount: 89.99,
+    date: "3 days ago",
+    icon: "💡",
+  },
+];
 
 export default function Dashboard() {
   return (
@@ -46,14 +64,18 @@ export default function Dashboard() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back! Here's your financial overview.</p>
+        <p className="text-muted-foreground">
+          Welcome back! Here's your financial overview.
+        </p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Expenses
+            </CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -111,8 +133,24 @@ export default function Dashboard() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="expenses" stroke="hsl(var(--chart-1))" />
-                <Line type="monotone" dataKey="budget" stroke="hsl(var(--chart-2))" />
+                <Line
+                  type="monotone"
+                  dataKey="expenses"
+                  stroke="#1c69e3"
+                  strokeWidth={3}
+                  dot={{ r: 5, fill: "#1c69e3" }}
+                  activeDot={{ r: 6 }}
+                  name="Expenses"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="budget"
+                  stroke="#22c55e"
+                  strokeWidth={3}
+                  dot={{ r: 5, fill: "#22c55e" }}
+                  activeDot={{ r: 6 }}
+                  name="Budget"
+                />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -136,8 +174,11 @@ export default function Dashboard() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {categoryData.map((_entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -156,20 +197,29 @@ export default function Dashboard() {
         <CardContent>
           <div className="space-y-4">
             {recentExpenses.map((expense) => (
-              <div key={expense.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
+              <div
+                key={expense.id}
+                className="flex items-center justify-between p-4 border border-border rounded-lg"
+              >
                 <div className="flex items-center gap-4">
                   <div className="text-2xl">{expense.icon}</div>
                   <div>
-                    <p className="font-medium text-foreground">{expense.category}</p>
-                    <p className="text-sm text-muted-foreground">{expense.date}</p>
+                    <p className="font-medium text-foreground">
+                      {expense.category}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {expense.date}
+                    </p>
                   </div>
                 </div>
-                <p className="font-bold text-foreground">${expense.amount.toFixed(2)}</p>
+                <p className="font-bold text-foreground">
+                  ${expense.amount.toFixed(2)}
+                </p>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
