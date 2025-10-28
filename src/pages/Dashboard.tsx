@@ -14,6 +14,8 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
 import { TrendingUp, Wallet, Target, AlertCircle } from "lucide-react"
 
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042']
+
 const monthlyData = [
   { month: "Jan", expenses: 2400, budget: 2400 },
   { month: "Feb", expenses: 1398, budget: 2210 },
@@ -28,6 +30,7 @@ const categoryData = [
   { name: "Transport", value: 1398, fill: "hsl(var(--chart-2))" },
   { name: "Entertainment", value: 9800, fill: "hsl(var(--chart-3))" },
   { name: "Utilities", value: 3908, fill: "hsl(var(--chart-4))" },
+  { name: "Healthcare", value: 5008, fill: "hsl(var(--chart-5))" },
 ]
 
 const recentExpenses = [
@@ -121,7 +124,7 @@ export default function Dashboard() {
             <CardDescription>This month's breakdown</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={300} object-cover>
               <PieChart>
                 <Pie
                   data={categoryData}
@@ -134,7 +137,7 @@ export default function Dashboard() {
                   dataKey="value"
                 >
                   {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip />
