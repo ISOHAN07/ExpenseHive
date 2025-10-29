@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 import { LayoutDashboard, Wallet, Tag, Target, BarChart3, TrendingUp, User, Settings, LogOut, X } from "lucide-react"
 import { Button } from "../../../components/ui/button"
 import { cn } from "../../../lib/utils"
+import { useAuth } from "../../context/useAuth"
 
 interface SidebarProps {
   open: boolean
@@ -13,6 +14,7 @@ interface SidebarProps {
 export default function Sidebar({ open, onOpenChange }: SidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
+  const {logout} = useAuth();
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
@@ -24,7 +26,7 @@ export default function Sidebar({ open, onOpenChange }: SidebarProps) {
   ]
 
   const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated")
+    logout();
     navigate("/login")
   }
 

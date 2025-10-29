@@ -1,17 +1,38 @@
-import { Navigate, Outlet } from "react-router-dom"
-import AppLayout from "./layout/AppLayout"
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "../../src/context/useAuth";
+import { useState, useEffect } from "react";
+import AppLayout from "./layout/AppLayout";
 
 export default function ProtectedRoute() {
-  // Check if user is authenticated (you can replace this with actual auth logic)
-  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true"
+  const { token } = useAuth();
+  const [isChecking, setIsChecking] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    if (token || storedToken) {
+      setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
+    }
+    setIsChecking(false);
+  }, [token]);
+
+  if (isChecking) {
+    return (
+      <div className="flex items-center justify-center h-screen text-muted-foreground">
+        Loading...
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace />;
   }
 
   return (
     <AppLayout>
       <Outlet />
     </AppLayout>
-  )
+  );
 }
