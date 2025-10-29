@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Trash2, Edit2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
@@ -22,68 +22,144 @@ import {
   DialogTrigger,
 } from "../../components/ui/dialog";
 
-const mockExpenses = [
-  {
-    id: 1,
-    category: "Food",
-    amount: 45.5,
-    date: "2024-01-15",
-    description: "Lunch at restaurant",
-  },
-  {
-    id: 2,
-    category: "Transport",
-    amount: 12.0,
-    date: "2024-01-14",
-    description: "Uber ride",
-  },
-  {
-    id: 3,
-    category: "Entertainment",
-    amount: 25.0,
-    date: "2024-01-13",
-    description: "Movie tickets",
-  },
-  {
-    id: 4,
-    category: "Utilities",
-    amount: 89.99,
-    date: "2024-01-12",
-    description: "Electricity bill",
-  },
-];
+import {
+  useExpenses,
+  useCreateExpense,
+  useDeleteExpense,
+  useUpdateExpense,
+} from "../../hooks/useExpenses";
+import { useCategories } from "../../hooks/useCategories";
+import type { ExpenseCreateDTO, ExpenseDTO, Category } from "../types/index";
 
-export default function Expenses() {
-  const [expenses, setExpenses] = useState(mockExpenses);
-  const [filter, setFilter] = useState("all");
-  const [newExpense, setNewExpense] = useState({
-    category: "",
-    amount: "",
-    description: "",
+export default function ExpensesPage() {
+  // queries
+  const { data: expenses = [], isLoading: loadingExpenses } = useExpenses();
+  const { data: categories = [], isLoading: loadingCategories } =
+    useCategories();
+
+  const createExpense = useCreateExpense();
+  const deleteExpense = useDeleteExpense();
+  const updateExpense = useUpdateExpense();
+
+  // UI state
+  const [filter, setFilter] = useState<string>("all");
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editing, setEditing] = useState<ExpenseDTO | null>(null);
+
+  const emptyForm = (): ExpenseCreateDTO => ({
+    expenseId: undefined,
+    expenseCategory: categories[0]?._id ?? "",
+    expenseDesc: "",
+    expenseDate: new Date().toISOString().slice(0, 10),
+    expenseAmount: 0,
+    userId: 101,
   });
 
-  const handleAddExpense = () => {
-    if (newExpense.category && newExpense.amount) {
-      setExpenses([
-        ...expenses,
-        {
-          id: expenses.length + 1,
-          category: newExpense.category,
-          amount: Number.parseFloat(newExpense.amount),
-          date: new Date().toISOString().split("T")[0],
-          description: newExpense.description,
-        },
-      ]);
-      setNewExpense({ category: "", amount: "", description: "" });
+  const [form, setForm] = useState<ExpenseCreateDTO>(emptyForm());
+
+  const getCategoryName = (cat: string | Category | undefined) => {
+    if (!cat) return "—";
+    if (typeof cat === "string") {
+      // try to resolve from categories list
+      const found = categories.find((c) => c._id === cat);
+      return found ? found.name : cat;
+    }
+    return (cat as Category).name ?? "—";
+  };
+
+  const categoryNames = useMemo(() => {
+    if (categories && categories.length) return categories.map((c) => c.name);
+    const names = new Set<string>();
+    expenses.forEach((e) => {
+      const cn =
+        typeof e.expenseCategory === "string"
+          ? e.expenseCategory
+          : e.expenseCategory?.name;
+      if (cn) names.add(cn);
+    });
+    return Array.from(names);
+  }, [categories, expenses]);
+
+  const filteredExpenses = useMemo(() => {
+    if (filter === "all") return expenses;
+    return expenses.filter(
+      (e) => getCategoryName(e.expenseCategory) === filter
+    );
+  }, [expenses, filter]);
+
+  const openAdd = () => {
+    setForm(emptyForm());
+    setIsAddOpen(true);
+  };
+
+  const handleAddExpense = async () => {
+    if (
+      !form.expenseCategory ||
+      !form.expenseAmount ||
+      !form.expenseDesc ||
+      !form.expenseDate
+    ) {
+      alert("Please provide all the fields.");
+      return;
+    }
+
+    try {
+      await createExpense.mutateAsync({
+        expenseId: Date.now(),
+        expenseCategory: form.expenseCategory, // category _id
+        expenseDesc: form.expenseDesc,
+        expenseDate: form.expenseDate,
+        expenseAmount: form.expenseAmount,
+        userId: 101,
+      });
+      setIsAddOpen(false);
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.response?.data?.message || "Failed to add expense");
     }
   };
 
-  const handleDelete = (id: number) => {
-    setExpenses(expenses.filter((e) => e.id !== id));
+  const handleDelete = async (id: Number) => {
+    if (!confirm("Delete this expense?")) return;
+    try {
+      await deleteExpense.mutateAsync(id);
+    } catch (err: any) {
+      console.error(err);
+      alert("Failed to delete");
+    }
   };
 
-  const filteredExpenses =
-    filter === "all" ? expenses : expenses.filter((e) => e.category === filter);
+  const startEdit = (expense: ExpenseDTO) => {
+    setEditing(expense);
+    setForm({
+      expenseId: expense.expenseId,
+      expenseCategory:
+        typeof expense.expenseCategory === "string"
+          ? expense.expenseCategory
+          : expense.expenseCategory?._id ?? "",
+      expenseDesc: expense.expenseDesc,
+      expenseDate: expense.expenseDate.slice(0, 10),
+      expenseAmount: expense.expenseAmount,
+      userId: expense.userId,
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editing) return;
+    try {
+      await updateExpense.mutateAsync({
+        expenseId: editing.expenseId!,
+        payload: form,
+      });
+      setIsEditOpen(false);
+      setEditing(null);
+    } catch (err: any) {
+      console.error(err);
+      alert("Failed to update");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -94,67 +170,98 @@ export default function Expenses() {
             Manage and track your expenses
           </p>
         </div>
-        <Dialog>
+
+        {/* Add Expense Dialog */}
+        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={openAdd}>
               <Plus className="w-4 h-4 mr-2" />
               Add Expense
             </Button>
           </DialogTrigger>
+
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add New Expense</DialogTitle>
               <DialogDescription>Create a new expense entry</DialogDescription>
             </DialogHeader>
+
             <div className="space-y-4">
               <div>
                 <Label htmlFor="category">Category</Label>
                 <Select
-                  value={newExpense.category}
-                  onValueChange={(value: string) =>
-                    setNewExpense({ ...newExpense, category: value })
+                  value={form.expenseCategory}
+                  onValueChange={(v: string) =>
+                    setForm((f) => ({ ...f, expenseCategory: v }))
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue
+                      placeholder={
+                        loadingCategories ? "Loading..." : "Select category"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Food">Food</SelectItem>
-                    <SelectItem value="Transport">Transport</SelectItem>
-                    <SelectItem value="Entertainment">Entertainment</SelectItem>
-                    <SelectItem value="Utilities">Utilities</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    {categories.length ? (
+                      categories.map((cat) => (
+                        <SelectItem key={cat._id} value={cat._id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="">No categories</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
+
               <div>
                 <Label htmlFor="amount">Amount</Label>
                 <Input
                   id="amount"
                   type="number"
                   placeholder="0.00"
-                  value={newExpense.amount}
+                  value={String(form.expenseAmount ?? "")}
                   onChange={(e) =>
-                    setNewExpense({ ...newExpense, amount: e.target.value })
+                    setForm((f) => ({
+                      ...f,
+                      expenseAmount: Number(e.target.value),
+                    }))
                   }
                 />
               </div>
+
               <div>
                 <Label htmlFor="description">Description</Label>
                 <Input
                   id="description"
                   placeholder="What was this expense for?"
-                  value={newExpense.description}
+                  value={form.expenseDesc}
                   onChange={(e) =>
-                    setNewExpense({
-                      ...newExpense,
-                      description: e.target.value,
-                    })
+                    setForm((f) => ({ ...f, expenseDesc: e.target.value }))
                   }
                 />
               </div>
-              <Button onClick={handleAddExpense} className="w-full">
-                Add Expense
+
+              <div>
+                <Label htmlFor="date">Date</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={form.expenseDate}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, expenseDate: e.target.value }))
+                  }
+                />
+              </div>
+
+              <Button
+                onClick={handleAddExpense}
+                className="w-full"
+                disabled={createExpense.isPending}
+              >
+                {createExpense.isPending ? "Adding..." : "Add Expense"}
               </Button>
             </div>
           </DialogContent>
@@ -169,7 +276,8 @@ export default function Expenses() {
         >
           All
         </Button>
-        {["Food", "Transport", "Entertainment", "Utilities"].map((cat) => (
+
+        {categoryNames.map((cat) => (
           <Button
             key={cat}
             variant={filter === cat ? "default" : "outline"}
@@ -182,43 +290,132 @@ export default function Expenses() {
 
       {/* Expenses List */}
       <div className="grid gap-4">
-        {filteredExpenses.map((expense) => (
-          <Card key={expense.id}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-foreground">
-                    {expense.category}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {expense.description}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {expense.date}
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <p className="text-2xl font-bold text-foreground">
-                    ${expense.amount.toFixed(2)}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="icon">
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(expense.id)}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
+        {loadingExpenses ? (
+          <p>Loading expenses...</p>
+        ) : filteredExpenses.length === 0 ? (
+          <p>No expenses found.</p>
+        ) : (
+          filteredExpenses.map((expense) => (
+            <Card key={expense._id ?? String(expense.expenseId)}>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      {getCategoryName(expense.expenseCategory)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {expense.expenseDesc}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {expense.expenseDate.slice(0, 10)}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <p className="text-2xl font-bold text-foreground">
+                      ${expense.expenseAmount.toFixed(2)}
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => startEdit(expense)}
+                        title="Edit"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(expense.expenseId!)}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Expense</DialogTitle>
+            <DialogDescription>Update expense details</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="category-edit">Category</Label>
+              <Select
+                value={form.expenseCategory}
+                onValueChange={(v: string) =>
+                  setForm((f) => ({ ...f, expenseCategory: v }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="amount-edit">Amount</Label>
+              <Input
+                id="amount-edit"
+                type="number"
+                value={String(form.expenseAmount ?? "")}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    expenseAmount: Number(e.target.value),
+                  }))
+                }
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="description-edit">Description</Label>
+              <Input
+                id="description-edit"
+                value={form.expenseDesc}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, expenseDesc: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                onClick={handleUpdate}
+                className="flex-1"
+                disabled={updateExpense.isPending}
+              >
+                {updateExpense.isPending ? "Saving..." : "Save"}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setIsEditOpen(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
