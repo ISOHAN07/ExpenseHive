@@ -120,7 +120,7 @@ export default function ExpensesPage() {
     }
   };
 
-  const handleDelete = async (id: Number) => {
+  const handleDelete = async (id: number) => {
     if (!confirm("Delete this expense?")) return;
     try {
       await deleteExpense.mutateAsync(id);

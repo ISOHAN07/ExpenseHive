@@ -10,7 +10,6 @@ export function useExpenses() {
     queryFn: async () => {
       const res = await api.get("/expenses");
 
-      // ✅ your backend returns an array directly
       const expenses = res.data;
 
       if (!Array.isArray(expenses)) {
@@ -26,7 +25,7 @@ export function useExpenses() {
 export function useCreateExpense() {
   const qc = useQueryClient();
   return useMutation<ExpenseDTO, Error, ExpenseCreateDTO>({
-    mutationFn: async (payload) => {
+    mutationFn: async (payload: ExpenseCreateDTO) => {
       const res = await api.post("/expenses", payload);
       return res.data?.data ?? res.data;
     },
@@ -37,7 +36,7 @@ export function useCreateExpense() {
 export function useUpdateExpense() {
   const qc = useQueryClient();
   return useMutation<ExpenseDTO, Error, { expenseId: number; payload: Partial<ExpenseCreateDTO> }>({
-    mutationFn: async ({ expenseId, payload }) => {
+    mutationFn: async ({ expenseId, payload }: { expenseId: number; payload: Partial<ExpenseCreateDTO> }) => {
       const res = await api.put(`/expenses/${expenseId}`, payload);
       return res.data?.data ?? res.data;
     },
@@ -47,8 +46,8 @@ export function useUpdateExpense() {
 
 export function useDeleteExpense() {
   const qc = useQueryClient();
-  return useMutation<Number, Error, Number>({
-    mutationFn: async (expenseId) => {
+  return useMutation<number, Error, number>({
+    mutationFn: async (expenseId: number) => {
       await api.delete(`/expenses/${expenseId}`);
       return expenseId;
     },
