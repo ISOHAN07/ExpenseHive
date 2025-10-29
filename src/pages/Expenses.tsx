@@ -44,16 +44,13 @@ export default function ExpensesPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editing, setEditing] = useState<ExpenseDTO | null>(null);
 
-  // ✅ Removed userId from form
-  const emptyForm = (): ExpenseCreateDTO => ({
+  const [form, setForm] = useState<ExpenseCreateDTO>({
     expenseId: undefined,
-    expenseCategory: categories[0]?._id ?? "",
+    expenseCategory: "",
     expenseDesc: "",
     expenseDate: new Date().toISOString().slice(0, 10),
     expenseAmount: 0,
   });
-
-  const [form, setForm] = useState<ExpenseCreateDTO>(emptyForm());
 
   const getCategoryName = (cat: string | Category | undefined) => {
     if (!cat) return "—";
@@ -85,7 +82,25 @@ export default function ExpensesPage() {
   }, [expenses, filter]);
 
   const openAdd = () => {
-    setForm(emptyForm());
+    if (loadingCategories) {
+      alert("Please wait, categories are still loading...");
+      return;
+    }
+
+    if (!categories || categories.length === 0) {
+      alert("You need to create a category before adding an expense.");
+      window.location.href = "/categories"; // ✅ Redirect user to category page
+      return;
+    }
+
+    setForm({
+      expenseId: undefined,
+      expenseCategory: categories[0]._id,
+      expenseDesc: "",
+      expenseDate: new Date().toISOString().slice(0, 10),
+      expenseAmount: 0,
+    });
+
     setIsAddOpen(true);
   };
 
@@ -162,7 +177,9 @@ export default function ExpensesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Expenses</h1>
-          <p className="text-muted-foreground">Manage and track your expenses</p>
+          <p className="text-muted-foreground">
+            Manage and track your expenses
+          </p>
         </div>
 
         {/* Add Expense Dialog */}
