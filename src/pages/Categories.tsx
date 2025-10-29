@@ -1,8 +1,13 @@
-"use client"
+"use client";
 
-import { Plus, Trash2, Edit2 } from "lucide-react"
-import { Button } from "../../components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Plus, Trash2, Edit2 } from "lucide-react";
+import { Button } from "../../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -10,37 +15,37 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../../components/ui/dialog"
-import { Input } from "../../components/ui/input"
-import { Label } from "../../components/ui/label"
-import { useState } from "react"
-import { useCategories } from "../../hooks/useCategories"
-import { toast } from "sonner"
+} from "../../components/ui/dialog";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { useState } from "react";
+import { useCategories } from "../../hooks/useCategories";
+import { toast } from "sonner";
 
 export default function Categories() {
-  const { categories, isLoading, addCategory, updateCategory, deleteCategory } = useCategories()
+  const { categories, isLoading, addCategory, updateCategory, deleteCategory } =
+    useCategories();
 
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<any>(null)
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<any>(null);
 
   const [newCategory, setNewCategory] = useState({
     name: "",
     color: "#FF6B6B",
     budget: "",
-  })
+  });
 
   const [editCategory, setEditCategory] = useState({
     name: "",
     color: "#FF6B6B",
     budget: "",
-  })
+  });
 
-  // ✅ Add Category
   const handleAddCategory = async () => {
     if (!newCategory.name || !newCategory.budget) {
-      toast.error("Please fill all fields")
-      return
+      toast.error("Please fill all fields");
+      return;
     }
 
     try {
@@ -48,29 +53,27 @@ export default function Categories() {
         name: newCategory.name,
         color: newCategory.color,
         budget: parseFloat(newCategory.budget),
-      })
-      setNewCategory({ name: "", color: "#FF6B6B", budget: "" })
-      setDialogOpen(false)
-      toast.success("Category added successfully")
+      });
+      setNewCategory({ name: "", color: "#FF6B6B", budget: "" });
+      setDialogOpen(false);
+      toast.success("Category added successfully");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to add category")
+      toast.error(err.response?.data?.message || "Failed to add category");
     }
-  }
+  };
 
-  // ✅ Edit Category (open dialog)
   const openEditDialog = (category: any) => {
-    setSelectedCategory(category)
+    setSelectedCategory(category);
     setEditCategory({
       name: category.name,
       color: category.color,
       budget: String(category.budget),
-    })
-    setEditDialogOpen(true)
-  }
+    });
+    setEditDialogOpen(true);
+  };
 
-  // ✅ Handle update
   const handleUpdateCategory = async () => {
-    if (!selectedCategory?._id) return
+    if (!selectedCategory?._id) return;
 
     try {
       await updateCategory.mutateAsync({
@@ -80,38 +83,38 @@ export default function Categories() {
           color: editCategory.color,
           budget: parseFloat(editCategory.budget),
         },
-      })
-      setEditDialogOpen(false)
-      toast.success("Category updated successfully")
+      });
+      setEditDialogOpen(false);
+      toast.success("Category updated successfully");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update category")
+      toast.error(err.response?.data?.message || "Failed to update category");
     }
-  }
+  };
 
-  // ✅ Delete Category
   const handleDelete = async (id: string | undefined) => {
     if (!id) {
-      toast.error("Invalid category id")
-      return
+      toast.error("Invalid category id");
+      return;
     }
 
-    if (!confirm("Delete this category? This cannot be undone.")) return
+    if (!confirm("Delete this category? This cannot be undone.")) return;
 
     try {
-      await deleteCategory.mutateAsync(id)
-      toast.success("Category deleted")
+      await deleteCategory.mutateAsync(id);
+      toast.success("Category deleted");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to delete category")
+      toast.error(err.response?.data?.message || "Failed to delete category");
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Categories</h1>
-          <p className="text-muted-foreground">Manage your expense categories</p>
+          <p className="text-muted-foreground">
+            Manage your expense categories
+          </p>
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -123,7 +126,9 @@ export default function Categories() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add New Category</DialogTitle>
-              <DialogDescription>Create a new expense category</DialogDescription>
+              <DialogDescription>
+                Create a new expense category
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -131,7 +136,9 @@ export default function Categories() {
                 <Input
                   id="name"
                   value={newCategory.name}
-                  onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                  onChange={(e) =>
+                    setNewCategory({ ...newCategory, name: e.target.value })
+                  }
                 />
               </div>
               <div>
@@ -140,13 +147,17 @@ export default function Categories() {
                   <input
                     type="color"
                     value={newCategory.color}
-                    onChange={(e) => setNewCategory({ ...newCategory, color: e.target.value })}
+                    onChange={(e) =>
+                      setNewCategory({ ...newCategory, color: e.target.value })
+                    }
                     className="w-12 h-10 rounded cursor-pointer"
                   />
                   <Input
                     id="color"
                     value={newCategory.color}
-                    onChange={(e) => setNewCategory({ ...newCategory, color: e.target.value })}
+                    onChange={(e) =>
+                      setNewCategory({ ...newCategory, color: e.target.value })
+                    }
                   />
                 </div>
               </div>
@@ -156,10 +167,16 @@ export default function Categories() {
                   id="budget"
                   type="number"
                   value={newCategory.budget}
-                  onChange={(e) => setNewCategory({ ...newCategory, budget: e.target.value })}
+                  onChange={(e) =>
+                    setNewCategory({ ...newCategory, budget: e.target.value })
+                  }
                 />
               </div>
-              <Button onClick={handleAddCategory} disabled={addCategory.isPending} className="w-full">
+              <Button
+                onClick={handleAddCategory}
+                disabled={addCategory.isPending}
+                className="w-full"
+              >
                 {addCategory.isPending ? "Adding..." : "Add Category"}
               </Button>
             </div>
@@ -175,8 +192,9 @@ export default function Categories() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.map((category) => {
-            const spent = category.spent || 0
-            const percentage = (spent / category.budget) * 100
+            const spent = category.spent || 0;
+            const budget = category.budget || 0;
+            const percentage = budget > 0 ? (spent / budget) * 100 : 0;
 
             return (
               <Card key={category._id}>
@@ -190,7 +208,11 @@ export default function Categories() {
                       <CardTitle className="text-lg">{category.name}</CardTitle>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(category)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEditDialog(category)}
+                      >
                         <Edit2 className="w-4 h-4" />
                       </Button>
                       <Button
@@ -207,7 +229,9 @@ export default function Categories() {
                 <CardContent className="space-y-4">
                   <div>
                     <div className="flex justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Spent</span>
+                      <span className="text-sm text-muted-foreground">
+                        Spent
+                      </span>
                       <span className="font-semibold">${spent.toFixed(2)}</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
@@ -224,16 +248,17 @@ export default function Categories() {
                     <span className="text-muted-foreground">
                       Budget: ${category.budget.toFixed(2)}
                     </span>
-                    <span className="font-semibold">{Math.round(percentage)}%</span>
+                    <span className="font-semibold">
+                      {Math.round(percentage)}%
+                    </span>
                   </div>
                 </CardContent>
               </Card>
-            )
+            );
           })}
         </div>
       )}
 
-      {/* ✅ Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -245,7 +270,9 @@ export default function Categories() {
               <Label>Name</Label>
               <Input
                 value={editCategory.name}
-                onChange={(e) => setEditCategory({ ...editCategory, name: e.target.value })}
+                onChange={(e) =>
+                  setEditCategory({ ...editCategory, name: e.target.value })
+                }
               />
             </div>
             <div>
@@ -254,12 +281,16 @@ export default function Categories() {
                 <input
                   type="color"
                   value={editCategory.color}
-                  onChange={(e) => setEditCategory({ ...editCategory, color: e.target.value })}
+                  onChange={(e) =>
+                    setEditCategory({ ...editCategory, color: e.target.value })
+                  }
                   className="w-12 h-10 rounded cursor-pointer"
                 />
                 <Input
                   value={editCategory.color}
-                  onChange={(e) => setEditCategory({ ...editCategory, color: e.target.value })}
+                  onChange={(e) =>
+                    setEditCategory({ ...editCategory, color: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -268,14 +299,22 @@ export default function Categories() {
               <Input
                 type="number"
                 value={editCategory.budget}
-                onChange={(e) => setEditCategory({ ...editCategory, budget: e.target.value })}
+                onChange={(e) =>
+                  setEditCategory({ ...editCategory, budget: e.target.value })
+                }
               />
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setEditDialogOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleUpdateCategory} disabled={updateCategory.isPending}>
+              <Button
+                onClick={handleUpdateCategory}
+                disabled={updateCategory.isPending}
+              >
                 {updateCategory.isPending ? "Updating..." : "Update"}
               </Button>
             </div>
@@ -283,5 +322,5 @@ export default function Categories() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
