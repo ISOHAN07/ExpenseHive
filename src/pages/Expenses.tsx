@@ -32,28 +32,25 @@ import { useCategories } from "../../hooks/useCategories";
 import type { ExpenseCreateDTO, ExpenseDTO, Category } from "../types/index";
 
 export default function ExpensesPage() {
-  // queries
   const { data: expenses = [], isLoading: loadingExpenses } = useExpenses();
-  const { data: categories = [], isLoading: loadingCategories } =
-    useCategories();
+  const { data: categories = [], isLoading: loadingCategories } = useCategories();
 
   const createExpense = useCreateExpense();
   const deleteExpense = useDeleteExpense();
   const updateExpense = useUpdateExpense();
 
-  // UI state
   const [filter, setFilter] = useState<string>("all");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editing, setEditing] = useState<ExpenseDTO | null>(null);
 
+  // ✅ Removed userId from form
   const emptyForm = (): ExpenseCreateDTO => ({
     expenseId: undefined,
     expenseCategory: categories[0]?._id ?? "",
     expenseDesc: "",
     expenseDate: new Date().toISOString().slice(0, 10),
     expenseAmount: 0,
-    userId: 101,
   });
 
   const [form, setForm] = useState<ExpenseCreateDTO>(emptyForm());
@@ -61,7 +58,6 @@ export default function ExpensesPage() {
   const getCategoryName = (cat: string | Category | undefined) => {
     if (!cat) return "—";
     if (typeof cat === "string") {
-      // try to resolve from categories list
       const found = categories.find((c) => c._id === cat);
       return found ? found.name : cat;
     }
@@ -93,6 +89,7 @@ export default function ExpensesPage() {
     setIsAddOpen(true);
   };
 
+  // ✅ No userId in payload, JWT is sent automatically via apiClient
   const handleAddExpense = async () => {
     if (
       !form.expenseCategory ||
@@ -106,12 +103,11 @@ export default function ExpensesPage() {
 
     try {
       await createExpense.mutateAsync({
-        expenseId: Date.now(),
-        expenseCategory: form.expenseCategory, // category _id
+        expenseId: Date.now(), // optional client-side id
+        expenseCategory: form.expenseCategory,
         expenseDesc: form.expenseDesc,
         expenseDate: form.expenseDate,
         expenseAmount: form.expenseAmount,
-        userId: 101,
       });
       setIsAddOpen(false);
     } catch (err: any) {
@@ -120,6 +116,7 @@ export default function ExpensesPage() {
     }
   };
 
+  // ✅ expenseId is a number
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this expense?")) return;
     try {
@@ -141,7 +138,6 @@ export default function ExpensesPage() {
       expenseDesc: expense.expenseDesc,
       expenseDate: expense.expenseDate.slice(0, 10),
       expenseAmount: expense.expenseAmount,
-      userId: expense.userId,
     });
     setIsEditOpen(true);
   };
@@ -166,9 +162,7 @@ export default function ExpensesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Expenses</h1>
-          <p className="text-muted-foreground">
-            Manage and track your expenses
-          </p>
+          <p className="text-muted-foreground">Manage and track your expenses</p>
         </div>
 
         {/* Add Expense Dialog */}
@@ -329,6 +323,7 @@ export default function ExpensesPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDelete(expense.expenseId!)}
+                        title="Delete"
                       >
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
