@@ -14,50 +14,110 @@ import {
 import { Input } from "../../components/ui/input"
 import { Label } from "../../components/ui/label"
 import { useState } from "react"
-
-const mockCategories = [
-  { id: 1, name: "Food", color: "#FF6B6B", spent: 450.5, budget: 500 },
-  { id: 2, name: "Transport", color: "#4ECDC4", spent: 200.0, budget: 300 },
-  { id: 3, name: "Entertainment", color: "#FFE66D", spent: 150.0, budget: 200 },
-  { id: 4, name: "Utilities", color: "#95E1D3", spent: 300.0, budget: 400 },
-]
+import { useCategories } from "../../hooks/useCategories"
+import { toast } from "sonner"
 
 export default function Categories() {
-  const [categories, setCategories] = useState(mockCategories)
-  const [newCategory, setNewCategory] = useState({ name: "", color: "#FF6B6B", budget: "" })
+  const { categories, isLoading, addCategory, updateCategory, deleteCategory } = useCategories()
 
-  const handleAddCategory = () => {
-    if (newCategory.name && newCategory.budget) {
-      setCategories([
-        ...categories,
-        {
-          id: categories.length + 1,
-          name: newCategory.name,
-          color: newCategory.color,
-          spent: 0,
-          budget: Number.parseFloat(newCategory.budget),
-        },
-      ])
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState<any>(null)
+
+  const [newCategory, setNewCategory] = useState({
+    name: "",
+    color: "#FF6B6B",
+    budget: "",
+  })
+
+  const [editCategory, setEditCategory] = useState({
+    name: "",
+    color: "#FF6B6B",
+    budget: "",
+  })
+
+  // ✅ Add Category
+  const handleAddCategory = async () => {
+    if (!newCategory.name || !newCategory.budget) {
+      toast.error("Please fill all fields")
+      return
+    }
+
+    try {
+      await addCategory.mutateAsync({
+        name: newCategory.name,
+        color: newCategory.color,
+        budget: parseFloat(newCategory.budget),
+      })
       setNewCategory({ name: "", color: "#FF6B6B", budget: "" })
+      setDialogOpen(false)
+      toast.success("Category added successfully")
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to add category")
     }
   }
 
-  const handleDelete = (id: number) => {
-    setCategories(categories.filter((c) => c.id !== id))
+  // ✅ Edit Category (open dialog)
+  const openEditDialog = (category: any) => {
+    setSelectedCategory(category)
+    setEditCategory({
+      name: category.name,
+      color: category.color,
+      budget: String(category.budget),
+    })
+    setEditDialogOpen(true)
+  }
+
+  // ✅ Handle update
+  const handleUpdateCategory = async () => {
+    if (!selectedCategory?._id) return
+
+    try {
+      await updateCategory.mutateAsync({
+        id: selectedCategory._id,
+        updates: {
+          name: editCategory.name.trim(),
+          color: editCategory.color,
+          budget: parseFloat(editCategory.budget),
+        },
+      })
+      setEditDialogOpen(false)
+      toast.success("Category updated successfully")
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to update category")
+    }
+  }
+
+  // ✅ Delete Category
+  const handleDelete = async (id: string | undefined) => {
+    if (!id) {
+      toast.error("Invalid category id")
+      return
+    }
+
+    if (!confirm("Delete this category? This cannot be undone.")) return
+
+    try {
+      await deleteCategory.mutateAsync(id)
+      toast.success("Category deleted")
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to delete category")
+    }
   }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Categories</h1>
           <p className="text-muted-foreground">Manage your expense categories</p>
         </div>
-        <Dialog>
+
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Category
+              <Plus className="w-4 h-4 mr-2" /> Add Category
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -67,10 +127,9 @@ export default function Categories() {
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="name">Category Name</Label>
+                <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
-                  placeholder="e.g., Groceries"
                   value={newCategory.name}
                   onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
                 />
@@ -92,70 +151,137 @@ export default function Categories() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="budget">Monthly Budget</Label>
+                <Label htmlFor="budget">Budget</Label>
                 <Input
                   id="budget"
                   type="number"
-                  placeholder="0.00"
                   value={newCategory.budget}
                   onChange={(e) => setNewCategory({ ...newCategory, budget: e.target.value })}
                 />
               </div>
-              <Button onClick={handleAddCategory} className="w-full">
-                Add Category
+              <Button onClick={handleAddCategory} disabled={addCategory.isPending} className="w-full">
+                {addCategory.isPending ? "Adding..." : "Add Category"}
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Categories Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {categories.map((category) => {
-          const percentage = (category.spent / category.budget) * 100
-          return (
-            <Card key={category.id}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: category.color }} />
-                    <CardTitle className="text-lg">{category.name}</CardTitle>
+      {/* Categories List */}
+      {isLoading ? (
+        <p className="text-muted-foreground">Loading categories...</p>
+      ) : categories.length === 0 ? (
+        <p className="text-muted-foreground">No categories yet.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categories.map((category) => {
+            const spent = category.spent || 0
+            const percentage = (spent / category.budget) * 100
+
+            return (
+              <Card key={category._id}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-4 h-4 rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      <CardTitle className="text-lg">{category.name}</CardTitle>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(category)}>
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(category._id)}
+                        disabled={deleteCategory.isPending}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="icon">
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(category.id)}>
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-sm text-muted-foreground">Spent</span>
+                      <span className="font-semibold">${spent.toFixed(2)}</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className="h-2 rounded-full transition-all"
+                        style={{
+                          width: `${Math.min(percentage, 100)}%`,
+                          backgroundColor: category.color,
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">Spent</span>
-                    <span className="font-semibold">${category.spent.toFixed(2)}</span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      Budget: ${category.budget.toFixed(2)}
+                    </span>
+                    <span className="font-semibold">{Math.round(percentage)}%</span>
                   </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div
-                      className="h-2 rounded-full transition-all"
-                      style={{
-                        width: `${Math.min(percentage, 100)}%`,
-                        backgroundColor: category.color,
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Budget: ${category.budget.toFixed(2)}</span>
-                  <span className="font-semibold">{Math.round(percentage)}%</span>
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      )}
+
+      {/* ✅ Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Category</DialogTitle>
+            <DialogDescription>Modify category details below</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div>
+              <Label>Name</Label>
+              <Input
+                value={editCategory.name}
+                onChange={(e) => setEditCategory({ ...editCategory, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Color</Label>
+              <div className="flex gap-2">
+                <input
+                  type="color"
+                  value={editCategory.color}
+                  onChange={(e) => setEditCategory({ ...editCategory, color: e.target.value })}
+                  className="w-12 h-10 rounded cursor-pointer"
+                />
+                <Input
+                  value={editCategory.color}
+                  onChange={(e) => setEditCategory({ ...editCategory, color: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <Label>Budget</Label>
+              <Input
+                type="number"
+                value={editCategory.budget}
+                onChange={(e) => setEditCategory({ ...editCategory, budget: e.target.value })}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateCategory} disabled={updateCategory.isPending}>
+                {updateCategory.isPending ? "Updating..." : "Update"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

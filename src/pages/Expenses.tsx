@@ -33,7 +33,7 @@ import type { ExpenseCreateDTO, ExpenseDTO, Category } from "../types/index";
 
 export default function ExpensesPage() {
   const { data: expenses = [], isLoading: loadingExpenses } = useExpenses();
-  const { data: categories = [], isLoading: loadingCategories } = useCategories();
+  const { categories = [], isLoading: loadingCategories } = useCategories();
 
   const createExpense = useCreateExpense();
   const deleteExpense = useDeleteExpense();
