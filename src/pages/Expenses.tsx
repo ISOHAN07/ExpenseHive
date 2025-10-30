@@ -89,7 +89,7 @@ export default function ExpensesPage() {
 
     if (!categories || categories.length === 0) {
       alert("You need to create a category before adding an expense.");
-      window.location.href = "/categories"; // ✅ Redirect user to category page
+      window.location.href = "/categories";
       return;
     }
 
@@ -104,7 +104,6 @@ export default function ExpensesPage() {
     setIsAddOpen(true);
   };
 
-  // ✅ No userId in payload, JWT is sent automatically via apiClient
   const handleAddExpense = async () => {
     if (
       !form.expenseCategory ||
@@ -118,7 +117,7 @@ export default function ExpensesPage() {
 
     try {
       await createExpense.mutateAsync({
-        expenseId: Date.now(), // optional client-side id
+        expenseId: Date.now(), 
         expenseCategory: form.expenseCategory,
         expenseDesc: form.expenseDesc,
         expenseDate: form.expenseDate,
@@ -131,7 +130,6 @@ export default function ExpensesPage() {
     }
   };
 
-  // ✅ expenseId is a number
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this expense?")) return;
     try {
@@ -184,7 +182,7 @@ export default function ExpensesPage() {
 
         {/* Add Expense Dialog */}
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
+          <DialogTrigger asChild className="cursor-pointer">
             <Button onClick={openAdd}>
               <Plus className="w-4 h-4 mr-2" />
               Add Expense
@@ -206,7 +204,7 @@ export default function ExpensesPage() {
                     setForm((f) => ({ ...f, expenseCategory: v }))
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="cursor-pointer">
                     <SelectValue
                       placeholder={
                         loadingCategories ? "Loading..." : "Select category"
@@ -216,7 +214,7 @@ export default function ExpensesPage() {
                   <SelectContent>
                     {categories.length ? (
                       categories.map((cat) => (
-                        <SelectItem key={cat._id} value={cat._id}>
+                        <SelectItem key={cat._id} value={cat._id} className="cursor-pointer">
                           {cat.name}
                         </SelectItem>
                       ))
@@ -284,6 +282,7 @@ export default function ExpensesPage() {
         <Button
           variant={filter === "all" ? "default" : "outline"}
           onClick={() => setFilter("all")}
+          className="cursor-pointer hover:bg-[#a8f7e7] hover:text-black"
         >
           All
         </Button>
@@ -293,6 +292,7 @@ export default function ExpensesPage() {
             key={cat}
             variant={filter === cat ? "default" : "outline"}
             onClick={() => setFilter(cat)}
+            className="cursor-pointer hover:text-black hover:bg-[#a8f7e7]"
           >
             {cat}
           </Button>
@@ -330,6 +330,7 @@ export default function ExpensesPage() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="cursor-pointer"
                         onClick={() => startEdit(expense)}
                         title="Edit"
                       >
@@ -339,6 +340,7 @@ export default function ExpensesPage() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="cursor-pointer"
                         onClick={() => handleDelete(expense.expenseId!)}
                         title="Delete"
                       >
@@ -412,7 +414,7 @@ export default function ExpensesPage() {
             <div className="flex gap-2">
               <Button
                 onClick={handleUpdate}
-                className="flex-1"
+                className="flex-1 cursor-pointer"
                 disabled={updateExpense.isPending}
               >
                 {updateExpense.isPending ? "Saving..." : "Save"}
@@ -420,7 +422,7 @@ export default function ExpensesPage() {
               <Button
                 variant="ghost"
                 onClick={() => setIsEditOpen(false)}
-                className="flex-1"
+                className="flex-1 cursor-pointer"
               >
                 Cancel
               </Button>

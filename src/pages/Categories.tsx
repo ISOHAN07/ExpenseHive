@@ -118,12 +118,12 @@ export default function Categories() {
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
+          <DialogTrigger asChild className="cursor-pointer">
             <Button>
               <Plus className="w-4 h-4 mr-2" /> Add Category
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="cursor-pointer">
             <DialogHeader>
               <DialogTitle>Add New Category</DialogTitle>
               <DialogDescription>
@@ -211,6 +211,7 @@ export default function Categories() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="cursor-pointer"
                         onClick={() => openEditDialog(category)}
                       >
                         <Edit2 className="w-4 h-4" />
@@ -218,6 +219,7 @@ export default function Categories() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="cursor-pointer"
                         onClick={() => handleDelete(category._id)}
                         disabled={deleteCategory.isPending}
                       >
