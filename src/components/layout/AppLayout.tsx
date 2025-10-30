@@ -1,15 +1,27 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Sidebar from "./Sidebar"
+import api from "../../api/apiClient"
 
 interface AppLayoutProps {
   children: React.ReactNode
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
+  useEffect(() => {
+    const wakeServer = async () => {
+      try {
+        await api.get("/ping");
+        console.log("✅ Backend is awake!");
+      } catch (err) {
+        console.warn("⚠️ Failed to ping backend:", err);
+      }
+    };
+    wakeServer();
+  }, []);
+
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   return (
