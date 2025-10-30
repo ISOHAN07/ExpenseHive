@@ -1,73 +1,43 @@
-# React + TypeScript + Vite
+# 💰 ExpenseHive Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The frontend for ExpenseHive, a modern personal finance tracker that helps users manage expenses, budgets, and categories with an intuitive dashboard.
+Built using React, Vite, TypeScript, and Tailwind CSS for a fast, responsive, and beautiful user experience.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🔑 Key Features
 
-## React Compiler
+1. **User Authentication — login/signup integrated with secure JWT backend.**  
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+2. **Expense Tracking — add, edit, delete, and view expenses.**  
 
-## Expanding the ESLint configuration
+3. **Categories — customizable expense categories with colors and icons.**  
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+4. **Budgets — set monthly budgets per category.**  
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+5. **Analytics & Reports — visualize spending trends.**  
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+6. **Responsive UI — optimized for both desktop and mobile.**  
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## ⚙️ Setup Instructions
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. **Clone this repository**  
+   ```bash
+   git clone https://github.com/ISOHAN07/ExpenseHive.git
+   cd ExpenseHive
+   
+2. **Install Dependencies**
+   ```bash
+   npm install
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+3. **Start the Server**
+   ```bash
+   npm run dev
+
+---
+
+## Demonstration Auth
+Email : test@gmail.com
+Password : test123456
