@@ -11,10 +11,12 @@ import Reports from "./pages/Reports"
 import Analytics from "./pages/Analytics"
 import Profile from "./pages/Profile"
 import ProtectedRoute from "./components/ProtectedRoute"
+import WakeBackend from "./components/WakeBackend"
 
 export default function App() {
   return (
     <Router>
+      <WakeBackend />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
