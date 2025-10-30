@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Wallet } from "lucide-react";
@@ -32,12 +31,18 @@ export default function Login() {
     e.preventDefault();
     setErrorMsg(null);
 
+    if (password.length < 6) {
+      setErrorMsg("Password must be at least 6 characters long.");
+      return;
+    }
+
     if (!email || !password) {
       setErrorMsg("Please enter both email and password.");
       return;
     }
 
     setIsSubmitting(true);
+
     try {
       const res = await api.post("/auth/login", { email, password });
       const { token, user } = res.data;
@@ -49,15 +54,34 @@ export default function Login() {
       }
 
       login(user, token);
-
       navigate("/dashboard");
     } catch (err: any) {
       console.error("Login error:", err);
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Failed to login. Please try again.";
-      setErrorMsg(msg);
+
+      const status = err?.response?.status;
+      const serverMsg = err?.response?.data?.message?.toLowerCase?.() || "";
+
+      if (status === 401 && serverMsg.includes("invalid credentials")) {
+        setErrorMsg(
+          "No such user found or wrong password. Please try again or sign up."
+        );
+      } else if (serverMsg.includes("user not found")) {
+        setErrorMsg("No such user found. Please sign up to continue.");
+      } else if (serverMsg.includes("password") && password.length < 6) {
+        setErrorMsg("Password must be at least 6 characters long.");
+      } else if (status === 500) {
+        if (password.length < 6) {
+          setErrorMsg("Password must be at least 6 characters long.");
+        } else {
+          setErrorMsg("Something went wrong. Please try again later.");
+        }
+      } else {
+        const msg =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Failed to login. Please try again.";
+        setErrorMsg(msg);
+      }
     } finally {
       setIsSubmitting(false);
     }
