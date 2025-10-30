@@ -1,7 +1,7 @@
 "use client"
 
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { LayoutDashboard, Wallet, Tag, Target, BarChart3, TrendingUp, User, Settings, LogOut, X } from "lucide-react"
+import { LayoutDashboard, Wallet, Tag, Target, BarChart3, TrendingUp, User, LogOut, X } from "lucide-react"
 import { Button } from "../../../components/ui/button"
 import { cn } from "../../../lib/utils"
 import { useAuth } from "../../context/useAuth"
