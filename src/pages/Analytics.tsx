@@ -1,7 +1,13 @@
 "use client";
 
 import { useMemo } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { useExpenses } from "../../hooks/useExpenses";
 import { useCategories } from "../../hooks/useCategories";
@@ -14,80 +20,119 @@ export default function Analytics() {
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
-  const monthlyExpenses = useMemo(() => {
-    return expenses.filter((e) => {
-      const d = new Date(e.expenseDate);
-      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-    });
-  }, [expenses, currentMonth, currentYear]);
+  // Previous month logic
+  const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+  const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
 
-  const analytics = useMemo(() => {
-    if (monthlyExpenses.length === 0) {
+  // Helper to compute analytics for a given month
+  const computeAnalytics = (month: number, year: number) => {
+    const monthExpenses = expenses.filter((e) => {
+      const d = new Date(e.expenseDate);
+      return d.getMonth() === month && d.getFullYear() === year;
+    });
+
+    if (monthExpenses.length === 0)
       return {
         avgDailySpending: 0,
         highestSpendingDay: "N/A",
         mostSpentCategory: "N/A",
         budgetEfficiency: 0,
+        total: 0,
       };
-    }
 
-    const total = monthlyExpenses.reduce((sum, e) => sum + e.expenseAmount, 0);
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const total = monthExpenses.reduce((sum, e) => sum + e.expenseAmount, 0);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
     const avgDaily = total / daysInMonth;
 
     const dayTotals: Record<string, number> = {};
-    monthlyExpenses.forEach((e) => {
-      const day = new Date(e.expenseDate).toLocaleDateString("en-US", { weekday: "long" });
+    monthExpenses.forEach((e) => {
+      const day = new Date(e.expenseDate).toLocaleDateString("en-US", {
+        weekday: "long",
+      });
       dayTotals[day] = (dayTotals[day] || 0) + e.expenseAmount;
     });
-    const highestDay = Object.entries(dayTotals).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
+    const highestDay =
+      Object.entries(dayTotals).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
 
     const catTotals: Record<string, number> = {};
-    monthlyExpenses.forEach((e) => {
+    monthExpenses.forEach((e) => {
       const cat =
         typeof e.expenseCategory === "object"
           ? e.expenseCategory?.name
           : e.expenseCategory;
       if (cat) catTotals[cat] = (catTotals[cat] || 0) + e.expenseAmount;
     });
-    const topCategory = Object.entries(catTotals).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
+    const topCategory =
+      Object.entries(catTotals).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
 
-    const totalBudget = categories.reduce((sum, c) => sum + (c.budget || 0), 0);
-    const efficiency = totalBudget > 0 ? Math.min((total / totalBudget) * 100, 100) : 0;
+    const totalBudget = categories.reduce(
+      (sum, c) => sum + (c.budget || 0),
+      0
+    );
+    const efficiency =
+      totalBudget > 0 ? Math.min((total / totalBudget) * 100, 100) : 0;
 
     return {
       avgDailySpending: avgDaily,
       highestSpendingDay: highestDay,
       mostSpentCategory: topCategory,
       budgetEfficiency: efficiency,
+      total,
     };
-  }, [monthlyExpenses, categories, currentMonth, currentYear]);
+  };
 
+  // Compute both months
+  const current = useMemo(
+    () => computeAnalytics(currentMonth, currentYear),
+    [expenses, categories, currentMonth, currentYear]
+  );
+  const previous = useMemo(
+    () => computeAnalytics(prevMonth, prevYear),
+    [expenses, categories, prevMonth, prevYear]
+  );
+
+  // Helper for percentage change
+  const getChange = (curr: number, prev: number) => {
+    if (prev === 0) return { change: "+0%", trend: "up" };
+    const diff = ((curr - prev) / prev) * 100;
+    return {
+      change: `${diff >= 0 ? "+" : ""}${diff.toFixed(1)}%`,
+      trend: diff >= 0 ? "up" : "down",
+    };
+  };
+
+  // Compute trends dynamically
+  const avgChange = getChange(current.avgDailySpending, previous.avgDailySpending);
+  const budgetChange = getChange(current.budgetEfficiency, previous.budgetEfficiency);
 
   const insights = [
     {
       title: "Average Daily Spending",
-      value: `$${analytics.avgDailySpending.toFixed(2)}`,
-      trend: "up",
-      change: "+12%",
+      value: `$${current.avgDailySpending.toFixed(2)}`,
+      ...avgChange,
     },
     {
       title: "Highest Spending Day",
-      value: analytics.highestSpendingDay,
+      value: current.highestSpendingDay,
       trend: "up",
-      change: "+25%",
+      change: "+0%",
     },
     {
       title: "Most Spent Category",
-      value: analytics.mostSpentCategory,
-      trend: "down",
-      change: "-8%",
+      value: current.mostSpentCategory,
+      trend:
+        current.mostSpentCategory === previous.mostSpentCategory
+          ? "up"
+          : "down",
+      change:
+        current.mostSpentCategory === previous.mostSpentCategory
+          ? "+0%"
+          : "-10%",
     },
     {
       title: "Budget Efficiency",
-      value: `${analytics.budgetEfficiency.toFixed(0)}%`,
-      trend: "up",
-      change: "+5%",
+      value: `${current.budgetEfficiency.toFixed(0)}%`,
+      ...budgetChange,
     },
   ];
 
@@ -107,7 +152,9 @@ export default function Analytics() {
         {insights.map((insight, i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{insight.title}</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {insight.title}
+              </CardTitle>
               {insight.trend === "up" ? (
                 <TrendingUp className="h-4 w-4 text-green-600" />
               ) : (
@@ -140,7 +187,7 @@ export default function Analytics() {
           <div className="p-4 bg-muted rounded-lg">
             <p className="font-semibold text-foreground">Peak Spending Day</p>
             <p className="text-sm text-muted-foreground">
-              You spend the most on <strong>{analytics.highestSpendingDay}</strong>.
+              You spend the most on <strong>{current.highestSpendingDay}</strong>.
             </p>
           </div>
 
@@ -148,7 +195,7 @@ export default function Analytics() {
             <p className="font-semibold text-foreground">Top Category</p>
             <p className="text-sm text-muted-foreground">
               Most of your spending is in{" "}
-              <strong>{analytics.mostSpentCategory}</strong>.
+              <strong>{current.mostSpentCategory}</strong>.
             </p>
           </div>
 
@@ -156,7 +203,7 @@ export default function Analytics() {
             <p className="font-semibold text-foreground">Budget Usage</p>
             <p className="text-sm text-muted-foreground">
               You've used about{" "}
-              <strong>{analytics.budgetEfficiency.toFixed(0)}%</strong> of your
+              <strong>{current.budgetEfficiency.toFixed(0)}%</strong> of your
               total budget this month.
             </p>
           </div>
