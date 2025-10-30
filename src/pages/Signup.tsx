@@ -16,8 +16,8 @@ import {
   CardTitle,
 } from "../../components/ui/card";
 
-import api from "../../src/api/apiClient"; // axios instance
-import { useAuth } from "../../src/context/useAuth"; // auth context (login function)
+import api from "../../src/api/apiClient"; 
+import { useAuth } from "../../src/context/useAuth"; 
 
 export default function Signup() {
   const [name, setName] = useState("");
@@ -40,10 +40,8 @@ export default function Signup() {
 
     setIsSubmitting(true);
     try {
-      // POST /auth/register expects { name, email, password }
       const res = await api.post("/auth/register", { name, email, password });
 
-      // expected response shape: { message, user: { id, name, email }, token }
       const { user, token } = res.data ?? {};
 
       if (!user || !token) {
@@ -52,10 +50,8 @@ export default function Signup() {
         return;
       }
 
-      // store auth in context (and localStorage inside context)
       login(user, token);
 
-      // navigate to dashboard or main page
       navigate("/dashboard");
     } catch (err: any) {
       console.error("Signup error:", err);

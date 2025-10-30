@@ -74,7 +74,6 @@ export default function Dashboard() {
           ? e.expenseDate
           : (e.expenseDate as any)
       );
-
       if (!isNaN(date.getTime())) {
         const key = `${date.getFullYear()}-${date.getMonth()}`;
         if (totalsMap.has(key)) {
@@ -84,14 +83,11 @@ export default function Dashboard() {
     });
 
     const totalBudget = categories.reduce((sum, c) => sum + (c.budget || 0), 0);
-    const budgetsMap = new Map(
-      lastSix.map(({ year, month }) => [`${year}-${month}`, totalBudget / 6])
-    );
 
     return lastSix.map(({ year, month }) => ({
       month: `${monthNames[month]} ${year}`,
       expenses: +(totalsMap.get(`${year}-${month}`) || 0).toFixed(2),
-      budget: +(budgetsMap.get(`${year}-${month}`) || 0).toFixed(2),
+      budget: +totalBudget.toFixed(2),
     }));
   }, [expenses, categories, currentMonth, currentYear]);
 
@@ -115,7 +111,6 @@ export default function Dashboard() {
   const percentageUsed =
     totalBudget > 0 ? Math.min((totalExpenses / totalBudget) * 100, 100) : 0;
 
-  // 🔹 Category Pie Chart Data
   const categoryData = useMemo(() => {
     if (!categories.length) return [];
     return categories.map((cat, index) => ({
@@ -125,7 +120,6 @@ export default function Dashboard() {
     }));
   }, [categories]);
 
-  // 🔹 Recent Expenses
   const recentExpenses = useMemo(() => {
     return [...expenses]
       .sort(

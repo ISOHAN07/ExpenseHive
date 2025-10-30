@@ -16,7 +16,6 @@ type CategoryType = {
 export default function Budgets() {
   const { categories = [], isLoading } = useCategories();
 
-  // derive overall totals and per-category safe values
   const { overall } = useMemo(() => {
     let totalBudget = 0;
     let totalSpent = 0;
@@ -45,7 +44,6 @@ export default function Budgets() {
   }, [categories]);
 
   if (isLoading) {
-    // preserve design: simple loading text or spinner
     return (
       <div className="space-y-6">
         <div>
@@ -54,8 +52,6 @@ export default function Budgets() {
         </div>
 
         <div className="flex items-center justify-center py-8">
-          {/* If you have a Spinner component use it; else simple text */}
-          {/* <Spinner /> */}
           <p className="text-muted-foreground">Loading budgets…</p>
         </div>
       </div>

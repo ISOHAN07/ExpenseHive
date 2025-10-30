@@ -20,11 +20,9 @@ export default function Analytics() {
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
-  // Previous month logic
   const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
   const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
 
-  // Helper to compute analytics for a given month
   const computeAnalytics = (month: number, year: number) => {
     const monthExpenses = expenses.filter((e) => {
       const d = new Date(e.expenseDate);
@@ -81,7 +79,6 @@ export default function Analytics() {
     };
   };
 
-  // Compute both months
   const current = useMemo(
     () => computeAnalytics(currentMonth, currentYear),
     [expenses, categories, currentMonth, currentYear]
@@ -91,7 +88,6 @@ export default function Analytics() {
     [expenses, categories, prevMonth, prevYear]
   );
 
-  // Helper for percentage change
   const getChange = (curr: number, prev: number) => {
     if (prev === 0) return { change: "+0%", trend: "up" };
     const diff = ((curr - prev) / prev) * 100;
@@ -101,7 +97,6 @@ export default function Analytics() {
     };
   };
 
-  // Compute trends dynamically
   const avgChange = getChange(current.avgDailySpending, previous.avgDailySpending);
   const budgetChange = getChange(current.budgetEfficiency, previous.budgetEfficiency);
 

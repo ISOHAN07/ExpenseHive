@@ -40,7 +40,6 @@ export default function Login() {
     setIsSubmitting(true);
     try {
       const res = await api.post("/auth/login", { email, password });
-      // backend expected shape: { message, user: { id, name, email }, token }
       const { token, user } = res.data;
 
       if (!token || !user) {
@@ -49,10 +48,8 @@ export default function Login() {
         return;
       }
 
-      // store user + token in auth context (and localStorage inside context)
       login(user, token);
 
-      // redirect to dashboard / expenses
       navigate("/dashboard");
     } catch (err: any) {
       console.error("Login error:", err);
