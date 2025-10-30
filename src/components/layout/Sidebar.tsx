@@ -97,19 +97,6 @@ export default function Sidebar({ open, onOpenChange }: SidebarProps) {
             <User className="w-5 h-5" />
             <span className="font-medium">Profile</span>
           </Link>
-          <Link
-            to="/settings"
-            onClick={() => onOpenChange(false)}
-            className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-              location.pathname === "/settings"
-                ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                : "text-sidebar-foreground hover:bg-sidebar-accent",
-            )}
-          >
-            <Settings className="w-5 h-5" />
-            <span className="font-medium">Settings</span>
-          </Link>
           <Button
             onClick={handleLogout}
             variant="ghost"

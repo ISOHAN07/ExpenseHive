@@ -10,7 +10,6 @@ import Budgets from "./pages/Budgets"
 import Reports from "./pages/Reports"
 import Analytics from "./pages/Analytics"
 import Profile from "./pages/Profile"
-import Settings from "./pages/Settings"
 import ProtectedRoute from "./components/ProtectedRoute"
 
 export default function App() {
@@ -30,7 +29,6 @@ export default function App() {
           <Route path="/reports" element={<Reports />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/settings" element={<Settings />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
