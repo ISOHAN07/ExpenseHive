@@ -1,3 +1,5 @@
+"use client";
+
 import {
   LineChart,
   Line,
@@ -19,46 +21,131 @@ import {
   CardTitle,
 } from "../../components/ui/card";
 import { TrendingUp, Wallet, Target, AlertCircle } from "lucide-react";
+import { useExpenses } from "../../hooks/useExpenses";
+import { useCategories } from "../../hooks/useCategories";
+import { useMemo } from "react";
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
-
-const monthlyData = [
-  { month: "Jan", expenses: 2400, budget: 2400 },
-  { month: "Feb", expenses: 1398, budget: 2210 },
-  { month: "Mar", expenses: 9800, budget: 2290 },
-  { month: "Apr", expenses: 3908, budget: 2000 },
-  { month: "May", expenses: 4800, budget: 2181 },
-  { month: "Jun", expenses: 3800, budget: 2500 },
-];
-
-const categoryData = [
-  { name: "Food", value: 2400, fill: "hsl(var(--chart-1))" },
-  { name: "Transport", value: 1398, fill: "hsl(var(--chart-2))" },
-  { name: "Entertainment", value: 9800, fill: "hsl(var(--chart-3))" },
-  { name: "Utilities", value: 3908, fill: "hsl(var(--chart-4))" },
-  { name: "Healthcare", value: 5008, fill: "hsl(var(--chart-5))" },
-];
-
-const recentExpenses = [
-  { id: 1, category: "Food", amount: 45.5, date: "Today", icon: "🍔" },
-  { id: 2, category: "Transport", amount: 12.0, date: "Yesterday", icon: "🚗" },
-  {
-    id: 3,
-    category: "Entertainment",
-    amount: 25.0,
-    date: "2 days ago",
-    icon: "🎬",
-  },
-  {
-    id: 4,
-    category: "Utilities",
-    amount: 89.99,
-    date: "3 days ago",
-    icon: "💡",
-  },
+// Category colors
+const COLORS = [
+  "#0088FE",
+  "#00C49F",
+  "#FFBB28",
+  "#FF8042",
+  "#A855F7",
+  "#EC4899",
 ];
 
 export default function Dashboard() {
+  const { data: expenses = [], isLoading: loadingExpenses } = useExpenses();
+  const { categories = [], isLoading: loadingCategories } = useCategories();
+
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const monthlyData = useMemo(() => {
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    const lastSix = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(currentYear, currentMonth - (5 - i), 1);
+      return { year: d.getFullYear(), month: d.getMonth() };
+    });
+
+    const totalsMap = new Map(
+      lastSix.map(({ year, month }) => [`${year}-${month}`, 0])
+    );
+
+    expenses.forEach((e) => {
+      const date = new Date(
+        typeof e.expenseDate === "string" || typeof e.expenseDate === "number"
+          ? e.expenseDate
+          : (e.expenseDate as any)
+      );
+
+      if (!isNaN(date.getTime())) {
+        const key = `${date.getFullYear()}-${date.getMonth()}`;
+        if (totalsMap.has(key)) {
+          totalsMap.set(key, (totalsMap.get(key) || 0) + e.expenseAmount);
+        }
+      }
+    });
+
+    const totalBudget = categories.reduce((sum, c) => sum + (c.budget || 0), 0);
+    const budgetsMap = new Map(
+      lastSix.map(({ year, month }) => [`${year}-${month}`, totalBudget / 6])
+    );
+
+    return lastSix.map(({ year, month }) => ({
+      month: `${monthNames[month]} ${year}`,
+      expenses: +(totalsMap.get(`${year}-${month}`) || 0).toFixed(2),
+      budget: +(budgetsMap.get(`${year}-${month}`) || 0).toFixed(2),
+    }));
+  }, [expenses, categories, currentMonth, currentYear]);
+
+  const totalBudget = useMemo(
+    () => categories.reduce((sum, c) => sum + (c.budget || 0), 0),
+    [categories]
+  );
+
+  const totalExpenses = useMemo(() => {
+    return expenses
+      .filter((e) => {
+        const date = new Date(e.expenseDate);
+        return (
+          date.getMonth() === currentMonth && date.getFullYear() === currentYear
+        );
+      })
+      .reduce((sum, e) => sum + e.expenseAmount, 0);
+  }, [expenses, currentMonth, currentYear]);
+
+  const remaining = Math.max(totalBudget - totalExpenses, 0);
+  const percentageUsed =
+    totalBudget > 0 ? Math.min((totalExpenses / totalBudget) * 100, 100) : 0;
+
+  // 🔹 Category Pie Chart Data
+  const categoryData = useMemo(() => {
+    if (!categories.length) return [];
+    return categories.map((cat, index) => ({
+      name: cat.name,
+      value: cat.spent ?? 0,
+      fill: COLORS[index % COLORS.length],
+    }));
+  }, [categories]);
+
+  // 🔹 Recent Expenses
+  const recentExpenses = useMemo(() => {
+    return [...expenses]
+      .sort(
+        (a, b) =>
+          new Date(b.expenseDate).getTime() - new Date(a.expenseDate).getTime()
+      )
+      .slice(0, 5)
+      .map((e) => ({
+        id: e._id,
+        category:
+          typeof e.expenseCategory === "object"
+            ? e.expenseCategory?.name
+            : e.expenseCategory,
+        amount: e.expenseAmount,
+        date: new Date(e.expenseDate).toLocaleDateString(),
+      }));
+  }, [expenses]);
+
+  if (loadingExpenses || loadingCategories) return <p>Loading dashboard...</p>;
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -79,7 +166,9 @@ export default function Dashboard() {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$2,543.50</div>
+            <div className="text-2xl font-bold">
+              ${totalExpenses.toFixed(2)}
+            </div>
             <p className="text-xs text-muted-foreground">This month</p>
           </CardContent>
         </Card>
@@ -90,8 +179,8 @@ export default function Dashboard() {
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$3,000.00</div>
-            <p className="text-xs text-muted-foreground">Monthly limit</p>
+            <div className="text-2xl font-bold">${totalBudget.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">Monthly total</p>
           </CardContent>
         </Card>
 
@@ -101,7 +190,7 @@ export default function Dashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$456.50</div>
+            <div className="text-2xl font-bold">${remaining.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">Available</p>
           </CardContent>
         </Card>
@@ -112,7 +201,9 @@ export default function Dashboard() {
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">85%</div>
+            <div className="text-2xl font-bold">
+              {percentageUsed.toFixed(0)}%
+            </div>
             <p className="text-xs text-muted-foreground">Budget used</p>
           </CardContent>
         </Card>
@@ -123,7 +214,9 @@ export default function Dashboard() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Monthly Spending Trend</CardTitle>
-            <CardDescription>Your expenses vs budget over time</CardDescription>
+            <CardDescription>
+              Your expenses vs budget (last 6 months)
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -162,7 +255,7 @@ export default function Dashboard() {
             <CardDescription>This month's breakdown</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300} object-cover>
+            <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
                   data={categoryData}
@@ -171,13 +264,12 @@ export default function Dashboard() {
                   labelLine={false}
                   label={({ name, value }) => `${name}: $${value}`}
                   outerRadius={80}
-                  fill="#8884d8"
                   dataKey="value"
                 >
-                  {categoryData.map((_entry, index) => (
+                  {categoryData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
+                      fill={entry.fill || COLORS[index % COLORS.length]}
                     />
                   ))}
                 </Pie>
@@ -196,27 +288,30 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {recentExpenses.map((expense) => (
-              <div
-                key={expense.id}
-                className="flex items-center justify-between p-4 border border-border rounded-lg"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="text-2xl">{expense.icon}</div>
+            {recentExpenses.length ? (
+              recentExpenses.map((expense) => (
+                <div
+                  key={expense.id}
+                  className="flex items-center justify-between p-4 border border-border rounded-lg"
+                >
                   <div>
                     <p className="font-medium text-foreground">
-                      {expense.category}
+                      {expense.category || "Uncategorized"}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {expense.date}
                     </p>
                   </div>
+                  <p className="font-bold text-foreground">
+                    ${expense.amount.toFixed(2)}
+                  </p>
                 </div>
-                <p className="font-bold text-foreground">
-                  ${expense.amount.toFixed(2)}
-                </p>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                No recent expenses found.
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
